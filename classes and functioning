@@ -1,0 +1,262 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+class Teacher;
+
+class Student {
+public:
+    string studentID;
+    string name;
+    string email;
+    vector<class Course*> coursesEnrolled;
+    Student(string studentID, string name, string email) : studentID(studentID), name(name), email(email) {}
+
+    void enrollCourse(class Course* course);
+    void dropCourse(class Course* course);
+    void viewCourses();
+    friend class Course; 
+};
+
+class Teacher {
+public:
+    string teacherID;
+    string name;
+    string email;
+    vector<class Course*> coursesTaught;
+    Teacher(string teacherID, string name, string email) : teacherID(teacherID), name(name), email(email) {}
+
+    void assignCourse(class Course* course);
+    void removeCourse(class Course* course);
+    void viewCourses();
+    friend class Course; 
+};
+
+class Course {
+public:
+    string courseCode;
+    string courseName;
+    Teacher* teacher;
+    vector<class Student*> studentsEnrolled;
+    Course(string courseCode, string courseName, Teacher* teacher) : courseCode(courseCode), courseName(courseName), teacher(teacher) {}
+    void addStudent(Student* student);
+    void removeStudent(Student* student);
+    void viewStudents();
+};
+
+void Student::enrollCourse(Course* course) {
+    coursesEnrolled.push_back(course);
+    course->addStudent(this);
+}
+
+void Student::dropCourse(Course* course) {
+    for (auto it = coursesEnrolled.begin(); it != coursesEnrolled.end(); ++it) {
+        if (*it == course) {
+            coursesEnrolled.erase(it);
+            course->removeStudent(this);
+            return;
+        }
+    }
+    cout << "You are not enrolled in this course." << endl;
+}
+
+void Student::viewCourses() {
+    if (!coursesEnrolled.empty()) {
+        cout << "Courses enrolled:" << endl;
+        for (auto course : coursesEnrolled) {
+            cout << course->courseName << endl;
+        }
+    }
+    else {
+        cout << "You are not enrolled in any course." << endl;
+    }
+}
+
+void Teacher::assignCourse(Course* course) {
+    coursesTaught.push_back(course);
+    course->teacher = this;
+}
+
+void Teacher::removeCourse(Course* course) {
+    for (auto it = coursesTaught.begin(); it != coursesTaught.end(); ++it) {
+        if (*it == course) {
+            coursesTaught.erase(it);
+            course->teacher = nullptr;
+            return;
+        }
+    }
+    cout << "You are not assigned to teach this course." << endl;
+}
+
+void Teacher::viewCourses() {
+    if (!coursesTaught.empty()) {
+        cout << "Courses taught:" << endl;
+        for (auto course : coursesTaught) {
+            cout << course->courseName << endl;
+        }
+    }
+    else {
+        cout << "You are not assigned to teach any course." << endl;
+    }
+}
+
+void Course::addStudent(Student* student) {
+    studentsEnrolled.push_back(student);
+}
+
+void Course::removeStudent(Student* student) {
+    for (auto it = studentsEnrolled.begin(); it != studentsEnrolled.end(); ++it) {
+        if (*it == student) {
+            studentsEnrolled.erase(it);
+            return;
+        }
+    }
+    cout << "This student is not enrolled in this course." << endl;
+}
+
+void Course::viewStudents() {
+    if (!studentsEnrolled.empty()) {
+        cout << "Students enrolled in " << courseName << ":" << endl;
+        for (auto student : studentsEnrolled) {
+            cout << student->name << endl;
+        }
+    }
+    else {
+        cout << "No student is enrolled in this course." << endl;
+    }
+}
+
+int main() {
+    vector<Student> students;
+    vector<Teacher> teachers;
+    vector<Course> courses;
+
+    char choice;
+    do {
+        cout << "Select an option:" << endl;
+        cout << "1. Add Student" << endl;
+        cout << "2. Add Teacher" << endl;
+        cout << "3. Add Course" << endl;
+        cout << "4. Enroll Student in Course" << endl;
+        cout << "5. Assign Course to Teacher" << endl;
+        cout << "6. View Courses Enrolled by Student" << endl;
+        cout << "7. View Courses Taught by Teacher" << endl;
+        cout << "8. View Students Enrolled in Course" << endl;
+        cout << "9. Exit" << endl;
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+        case '1': {
+            string studentID, name, email;
+            cout << "Enter student ID: ";
+            cin >> studentID;
+            cout << "Enter student name: ";
+            cin.ignore();
+            getline(cin, name);
+            cout << "Enter student email: ";
+            cin >> email;
+            students.push_back(Student(studentID, name, email));
+            break;
+        }
+        case '2': {
+            string teacherID, name, email;
+            cout << "Enter teacher ID: ";
+            cin >> teacherID;
+            cout << "Enter teacher name: ";
+            cin.ignore();
+            getline(cin, name);
+            cout << "Enter teacher email: ";
+            cin >> email;
+            teachers.push_back(Teacher(teacherID, name, email));
+            break;
+        }
+        case '3': {
+            string courseCode, courseName;
+            cout << "Enter course code: ";
+            cin >> courseCode;
+            cout << "Enter course name: ";
+            cin.ignore();
+            getline(cin, courseName);
+            cout << "Select a teacher for the course:" << endl;
+            for (int i = 0; i < teachers.size(); ++i) {
+                cout << i + 1 << ". " << teachers[i].name << endl;
+            }
+            int teacherIndex;
+            cin >> teacherIndex;
+            courses.push_back(Course(courseCode, courseName, &teachers[teacherIndex - 1]));
+            break;
+        }
+        case '4': {
+            cout << "Select a student:" << endl;
+            for (int i = 0; i < students.size(); ++i) {
+                cout << i + 1 << ". " << students[i].name << endl;
+            }
+            int studentIndex;
+            cin >> studentIndex;
+            cout << "Select a course:" << endl;
+            for (int i = 0; i < courses.size(); ++i) {
+                cout << i + 1 << ". " << courses[i].courseName << endl;
+            }
+            int courseIndex;
+            cin >> courseIndex;
+            students[studentIndex - 1].enrollCourse(&courses[courseIndex - 1]);
+            break;
+        }
+        case '5': {
+            cout << "Select a teacher:" << endl;
+            for (int i = 0; i < teachers.size(); ++i) {
+                    cout << i + 1 << ". " << teachers[i].name << endl;
+            }
+            int teacherIndex;
+            cin >> teacherIndex;
+            cout << "Select a course:" << endl;
+            for (int i = 0; i < courses.size(); ++i) {
+                cout << i + 1 << ". " << courses[i].courseName << endl;
+            }
+            int courseIndex;
+            cin >> courseIndex;
+            teachers[teacherIndex - 1].assignCourse(&courses[courseIndex - 1]);
+            break;
+        }
+        case '6': {
+            cout << "Select a student:" << endl;
+            for (int i = 0; i < students.size(); ++i) {
+                cout << i + 1 << ". " << students[i].name << endl;
+            }
+            int studentIndex;
+            cin >> studentIndex;
+            students[studentIndex - 1].viewCourses();
+            break;
+        }
+        case '7': {
+            cout << "Select a teacher:" << endl;
+            for (int i = 0; i < teachers.size(); ++i) {
+                cout << i + 1 << ". " << teachers[i].name << endl;
+            }
+            int teacherIndex;
+            cin >> teacherIndex;
+            teachers[teacherIndex - 1].viewCourses();
+            break;
+        }
+        case '8': {
+            cout << "Select a course:" << endl;
+            for (int i = 0; i < courses.size(); ++i) {
+                cout << i + 1 << ". " << courses[i].courseName << endl;
+            }
+            int courseIndex;
+            cin >> courseIndex;
+            courses[courseIndex - 1].viewStudents();
+            break;
+        }
+        case '9':
+            cout << "Exiting..." << endl;
+            break;
+        default:
+            cout << "Invalid choice. Please try again." << endl;
+        }
+    } while (choice != '9');
+
+    return 0;
+}
+
